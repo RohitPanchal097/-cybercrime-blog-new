@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarAlt, faUser, faArrowLeft, faShare } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faUser, faArrowLeft, faShare, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { postsAPI } from '../services/api';
+
+// Get API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 const BlogPost = () => {
   const { id } = useParams();
@@ -13,23 +16,14 @@ const BlogPost = () => {
 
   useEffect(() => {
     const fetchPost = async () => {
-      if (!id) {
-        setError('Post ID is missing');
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
+        const response = await postsAPI.getPostById(id);
+        setPost(response.data);
         setError(null);
-        const data = await postsAPI.getPost(id);
-        if (!data) {
-          throw new Error('Post not found');
-        }
-        setPost(data);
-      } catch (error) {
-        setError(error.response?.data?.message || 'Failed to fetch post');
-        setPost(null);
+      } catch (err) {
+        setError('Failed to load post. Please try again later.');
+        console.error('Error fetching post:', err);
       } finally {
         setLoading(false);
       }
@@ -38,23 +32,74 @@ const BlogPost = () => {
     fetchPost();
   }, [id]);
 
+  // Function to format date
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Function to get image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL}/uploads/${imagePath}`;
+  };
+
+  // Function to share post
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post?.title,
+          text: post?.content?.substring(0, 100) + '...',
+          url: window.location.href
+        });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => alert('Link copied to clipboard!'))
+        .catch(err => console.error('Failed to copy:', err));
+    }
+  };
+
   if (loading) {
     return (
-      <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <div className="container text-center py-5">
+        <FontAwesomeIcon icon={faSpinner} spin size="3x" />
+        <p className="mt-3">Loading post...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-5">
+        <div className="alert alert-danger" role="alert">
+          {error}
+          <div className="mt-3">
+            <Link to="/" className="btn btn-outline-danger">
+              <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
+              Back to Home
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (error || !post) {
+  if (!post) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error || 'Post not found'}
+      <div className="container py-5">
+        <div className="alert alert-warning" role="alert">
+          Post not found
           <div className="mt-3">
-            <Link to="/" className="btn btn-primary">
+            <Link to="/" className="btn btn-outline-warning">
               <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
               Back to Home
             </Link>
@@ -65,77 +110,59 @@ const BlogPost = () => {
   }
 
   return (
-    <article className="blog-post">
-      <div className="mb-4">
-        <Link to="/" className="btn btn-outline-primary">
-          <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
-          Back to Home
-        </Link>
-      </div>
+    <div className="container py-5">
+      <div className="row justify-content-center">
+        <div className="col-lg-8">
+          <Link to="/" className="btn btn-outline-primary mb-4">
+            <FontAwesomeIcon icon={faArrowLeft} className="me-2" />
+            Back to Posts
+          </Link>
 
-      <div className="card shadow-sm">
-        {post.image && (
-          <img 
-            src={`http://localhost:5000/uploads/${post.image}`} 
-            className="card-img-top" 
-            alt={post.title || 'Blog post image'}
-            style={{ maxHeight: '400px', objectFit: 'cover' }}
-          />
-        )}
-        <div className="card-body">
-          <div className="mb-3">
-            {post.category && (
-              <span className="badge bg-primary">{post.category}</span>
-            )}
-          </div>
-          
-          <h1 className="card-title h2 mb-3">{post.title || 'Untitled Post'}</h1>
-          
-          <div className="text-muted mb-4">
-            {post.createdAt && (
-              <>
+          <article className="blog-post">
+            <h1 className="mb-4">{post.title}</h1>
+            
+            <div className="text-muted mb-4">
+              <small>
                 <FontAwesomeIcon icon={faCalendarAlt} className="me-2" />
-                {new Date(post.createdAt).toLocaleDateString()}
-              </>
-            )}
-            {post.author?.username && (
-              <>
-                <FontAwesomeIcon icon={faUser} className="ms-3 me-2" />
-                {post.author.username}
-              </>
-            )}
-          </div>
+                {formatDate(post.createdAt)}
+              </small>
+              <br />
+              <small>
+                <FontAwesomeIcon icon={faUser} className="me-2" />
+                {post.author || 'Anonymous'}
+              </small>
+            </div>
 
-          <div className="blog-content">
-            {post.content ? (
-              <div dangerouslySetInnerHTML={{ __html: post.content }} />
-            ) : (
-              <p className="text-muted">No content available.</p>
+            {post.image && (
+              <img
+                src={getImageUrl(post.image)}
+                className="img-fluid rounded mb-4"
+                alt={post.title}
+                style={{ maxHeight: '400px', width: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://via.placeholder.com/800x400?text=Image+Not+Available';
+                }}
+              />
             )}
-          </div>
 
-          <div className="mt-4 pt-3 border-top">
+            <div className="blog-content mb-4">
+              {post.content?.split('\n').map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
+
             <button 
+              onClick={handleShare}
               className="btn btn-outline-primary"
-              onClick={() => {
-                navigator.share({
-                  title: post.title,
-                  text: post.content?.substring(0, 100) + '...',
-                  url: window.location.href
-                }).catch(() => {
-                  // Fallback for browsers that don't support Web Share API
-                  navigator.clipboard.writeText(window.location.href);
-                  alert('Link copied to clipboard!');
-                });
-              }}
             >
               <FontAwesomeIcon icon={faShare} className="me-2" />
               Share Post
             </button>
-          </div>
+          </article>
         </div>
       </div>
-    </article>
+    </div>
   );
 };
 
