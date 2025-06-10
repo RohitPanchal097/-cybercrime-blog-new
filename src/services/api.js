@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Get the API URL from environment variables, fallback to localhost for development
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Get the API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Create axios instance with base URL and default headers
 const api = axios.create({
@@ -10,7 +10,9 @@ const api = axios.create({
     'Content-Type': 'application/json'
   },
   // Add timeout to prevent hanging requests
-  timeout: 10000
+  timeout: 15000, // Increased timeout for Vercel's cold starts
+  // Add withCredentials for CORS
+  withCredentials: true
 });
 
 // Add request interceptor to include auth token
@@ -35,6 +37,14 @@ api.interceptors.response.use(
       // Clear token and redirect to login if unauthorized
       localStorage.removeItem('token');
       window.location.href = '/login';
+    } else if (error.code === 'ECONNABORTED') {
+      // Handle timeout errors
+      console.error('Request timeout - server might be cold starting');
+      return Promise.reject(new Error('Request timed out. Please try again.'));
+    } else if (!error.response) {
+      // Handle network errors
+      console.error('Network error:', error);
+      return Promise.reject(new Error('Network error. Please check your connection.'));
     }
     return Promise.reject(error);
   }
@@ -42,66 +52,59 @@ api.interceptors.response.use(
 
 // Auth API calls
 export const authAPI = {
-  login: async (username, password) => {
-    const response = await api.post('/auth/login', { username, password });
-    return response.data;
-  },
-  register: async (username, password) => {
-    const response = await api.post('/auth/register', { username, password });
-    return response.data;
-  },
-  getCurrentUser: async () => {
-    const response = await api.get('/auth/me');
-    return response.data;
+  login: (credentials) => api.post('/auth/login', credentials),
+  register: (userData) => api.post('/auth/register', userData),
+  logout: () => {
+    localStorage.removeItem('token');
+    return Promise.resolve();
   }
 };
 
 // Posts API calls
 export const postsAPI = {
-  getAllPosts: async () => {
-    const response = await api.get('/posts');
-    return response.data;
-  },
-  getPost: async (id) => {
-    const response = await api.get(`/posts/${id}`);
-    return response.data;
-  },
-  createPost: async (postData) => {
+  getAllPosts: () => api.get('/posts'),
+  getPostById: (id) => api.get(`/posts/${id}`),
+  createPost: (postData) => {
     const formData = new FormData();
     Object.keys(postData).forEach(key => {
-      if (key === 'image' && postData[key] instanceof File) {
+      if (key === 'image' && postData[key]) {
         formData.append('image', postData[key]);
       } else {
         formData.append(key, postData[key]);
       }
     });
-    
-    const response = await api.post('/posts', formData, {
+    return api.post('/posts', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
-    return response.data;
   },
-  updatePost: async (id, postData) => {
+  updatePost: (id, postData) => {
     const formData = new FormData();
     Object.keys(postData).forEach(key => {
-      if (key === 'image' && postData[key] instanceof File) {
+      if (key === 'image' && postData[key]) {
         formData.append('image', postData[key]);
       } else {
         formData.append(key, postData[key]);
       }
     });
-    
-    const response = await api.put(`/posts/${id}`, formData, {
+    return api.put(`/posts/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
-    return response.data;
   },
-  deletePost: async (id) => {
-    const response = await api.delete(`/posts/${id}`);
-    return response.data;
-  }
-}; 
+  deletePost: (id) => api.delete(`/posts/${id}`)
+};
+
+// Comments API calls
+export const commentsAPI = {
+  getComments: (postId) => api.get(`/posts/${postId}/comments`),
+  addComment: (postId, comment) => api.post(`/posts/${postId}/comments`, comment),
+  updateComment: (postId, commentId, comment) => 
+    api.put(`/posts/${postId}/comments/${commentId}`, comment),
+  deleteComment: (postId, commentId) => 
+    api.delete(`/posts/${postId}/comments/${commentId}`)
+};
+
+export default api; 
