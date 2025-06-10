@@ -15,13 +15,16 @@ const api = axios.create({
   withCredentials: true
 });
 
-// Add request interceptor to include auth token
+// Add request interceptor to include auth token and handle CORS
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Add CORS headers for Vercel
+    config.headers['Access-Control-Allow-Origin'] = '*';
+    config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
     return config;
   },
   (error) => {
@@ -38,13 +41,17 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       window.location.href = '/login';
     } else if (error.code === 'ECONNABORTED') {
-      // Handle timeout errors
+      // Handle timeout errors (common with Vercel's cold starts)
       console.error('Request timeout - server might be cold starting');
-      return Promise.reject(new Error('Request timed out. Please try again.'));
+      return Promise.reject(new Error('Request timed out. Please try again in a few seconds.'));
     } else if (!error.response) {
       // Handle network errors
       console.error('Network error:', error);
       return Promise.reject(new Error('Network error. Please check your connection.'));
+    } else if (error.response?.status === 503) {
+      // Handle Vercel's cold start
+      console.error('Service temporarily unavailable - cold start');
+      return Promise.reject(new Error('Service is starting up. Please try again in a few seconds.'));
     }
     return Promise.reject(error);
   }
