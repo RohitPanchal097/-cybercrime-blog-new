@@ -29,11 +29,27 @@ export const postsAPI = {
     return postDoc.exists() ? { id: postDoc.id, ...postDoc.data() } : null;
   },
   createPost: async (postData) => {
-    // postData should include image URL from Firebase Storage
-    await addDoc(collection(db, "posts"), {
-      ...postData,
-      createdAt: new Date()
-    });
+    try {
+      let imageUrl = postData.image;
+      if (postData.image instanceof File) {
+        // Upload image to Firebase Storage
+        const storageRef = ref(storage, `uploads/${Date.now()}-${postData.image.name}`);
+        await uploadBytes(storageRef, postData.image);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+
+      // Create post in Firestore with the image URL
+      const docRef = await addDoc(collection(db, "posts"), {
+        ...postData,
+        image: imageUrl,
+        createdAt: new Date()
+      });
+      
+      return { id: docRef.id, ...postData, image: imageUrl };
+    } catch (error) {
+      console.error("Error creating post:", error);
+      throw error;
+    }
   },
   updatePost: async (id, postData) => {
     let imageUrl = postData.image;
