@@ -4,9 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faUser, faArrowLeft, faShare, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { postsAPI } from '../services/api';
 
-// Get API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
-
 const BlogPost = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -19,7 +16,7 @@ const BlogPost = () => {
       try {
         setLoading(true);
         const response = await postsAPI.getPostById(id);
-        setPost(response.data);
+        setPost(response);
         setError(null);
       } catch (err) {
         setError('Failed to load post. Please try again later.');
@@ -39,13 +36,6 @@ const BlogPost = () => {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  // Function to get image URL
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    return `${API_URL}/uploads/${imagePath}`;
   };
 
   // Function to share post
@@ -135,7 +125,7 @@ const BlogPost = () => {
 
             {post.image && (
               <img
-                src={getImageUrl(post.image)}
+                src={post.image}
                 className="img-fluid rounded mb-4"
                 alt={post.title}
                 style={{ maxHeight: '400px', width: '100%', objectFit: 'cover' }}

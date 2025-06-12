@@ -54,7 +54,7 @@ const CreatePost = () => {
       toast.success('Post created successfully!');
       navigate('/admin/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create post. Please try again.');
+      toast.error('Failed to create post. Please try again.');
     } finally {
       setLoading(false);
     }

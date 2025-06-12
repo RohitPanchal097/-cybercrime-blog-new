@@ -47,21 +47,19 @@ const EditPost = () => {
       try {
         setLoading(true);
         setError(null);
-        const post = await postsAPI.getPost(id);
-        
+        const post = await postsAPI.getPostById(id);
         if (!post) {
           throw new Error('Post not found');
         }
-
         setFormData({
           title: post.title || '',
           category: post.category || '',
           content: post.content || '',
           image: null,
-          imagePreview: post.image ? `http://localhost:5000/uploads/${post.image}` : null
+          imagePreview: post.image || null
         });
       } catch (error) {
-        setError(error.response?.data?.message || 'Failed to fetch post');
+        setError('Failed to fetch post');
         toast.error('Failed to fetch post');
         navigate('/admin/dashboard');
       } finally {

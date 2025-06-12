@@ -99,11 +99,11 @@ const Categories = () => {
             </h3>
             <div className="row g-4">
               {categories[category].map(post => (
-                <div key={post._id || Math.random()} className="col-md-6 col-lg-4">
+                <div key={post.id} className="col-md-6 col-lg-4">
                   <div className="card h-100 shadow-sm">
                     {post.image ? (
                       <img 
-                        src={`http://localhost:5000/uploads/${post.image}`}
+                        src={post.image}
                         className="card-img-top" 
                         alt={post.title || 'Blog post image'}
                         style={{ height: '200px', objectFit: 'cover' }}
@@ -143,8 +143,8 @@ const Categories = () => {
                             </>
                           )}
                         </div>
-                        {post._id && (
-                          <Link to={`/post/${post._id}`} className="btn btn-outline-primary btn-sm">
+                        {post.id && (
+                          <Link to={`/post/${post.id}`} className="btn btn-outline-primary btn-sm">
                             Read More <FontAwesomeIcon icon={faArrowRight} className="ms-1" />
                           </Link>
                         )}

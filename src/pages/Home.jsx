@@ -4,9 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faUser, faArrowRight, faNewspaper, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { postsAPI } from '../services/api';
 
-// Get API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
-
 const Home = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,8 +13,8 @@ const Home = () => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const response = await postsAPI.getAllPosts();
-        setPosts(response.data);
+        const posts = await postsAPI.getAllPosts();
+        setPosts(posts);
         setError(null);
       } catch (err) {
         setError('Failed to load posts. Please try again later.');
@@ -26,7 +23,6 @@ const Home = () => {
         setLoading(false);
       }
     };
-
     fetchPosts();
   }, []);
 
@@ -37,13 +33,6 @@ const Home = () => {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  // Function to get image URL
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    return `${API_URL}/uploads/${imagePath}`;
   };
 
   if (loading) {
@@ -69,11 +58,11 @@ const Home = () => {
     <div className="container py-5">
       <div className="row">
         {posts.map((post) => (
-          <div key={post._id} className="col-md-4 mb-4">
+          <div key={post.id} className="col-md-4 mb-4">
             <div className="card h-100 shadow-sm">
               {post.image ? (
                 <img 
-                  src={getImageUrl(post.image)}
+                  src={post.image}
                   className="card-img-top" 
                   alt={post.title || 'Blog post image'}
                   style={{ height: '200px', objectFit: 'cover' }}
@@ -107,7 +96,7 @@ const Home = () => {
                   {post.content?.substring(0, 150)}
                   {post.content?.length > 150 ? '...' : ''}
                 </p>
-                <Link to={`/post/${post._id}`} className="btn btn-primary">
+                <Link to={`/post/${post.id}`} className="btn btn-primary">
                   Read More <FontAwesomeIcon icon={faArrowRight} className="ms-2" />
                 </Link>
               </div>
