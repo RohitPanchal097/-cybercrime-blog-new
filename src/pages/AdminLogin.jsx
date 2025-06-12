@@ -6,6 +6,9 @@ import { faUserLock, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import firebaseApp from '../services/api';
 
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "admin@123";
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -27,31 +30,26 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, formData.username, formData.password);
-      const user = userCredential.user;
-      if (user.email === 'admin@gmail.com') {
-        localStorage.setItem('adminToken', 'dummy-token');
+      if (
+        formData.username === ADMIN_USERNAME &&
+        formData.password === ADMIN_PASSWORD
+      ) {
+        localStorage.setItem('adminToken', 'static-admin-token');
         toast.success('Login successful!');
         navigate('/admin/dashboard');
       } else {
-        toast.error('Invalid credentials');
+        toast.error('Invalid username or password');
       }
-      toast.success('Login successful!');
-      navigate('/admin/dashboard');
-    } catch (error) {
-      toast.error('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        navigate('/admin/login');
-      }
-    });
-    return () => unsubscribe();
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      navigate('/admin/login');
+    }
   }, [navigate]);
 
   return (
