@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserLock, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
-import { authAPI } from '../services/api';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -24,14 +23,13 @@ const AdminLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const response = await authAPI.login(formData.username, formData.password);
-      localStorage.setItem('adminToken', response.token);
+      // Placeholder: Set a dummy token for admin login
+      localStorage.setItem('adminToken', 'dummy-token');
       toast.success('Login successful!');
       navigate('/admin/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed. Please try again.');
+      toast.error('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
