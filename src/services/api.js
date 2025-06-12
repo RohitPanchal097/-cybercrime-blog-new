@@ -7,24 +7,25 @@ const API_URL = import.meta.env.VITE_API_URL;
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   },
   // Add timeout to prevent hanging requests
-  timeout: 15000, // Increased timeout for Vercel's cold starts
-  // Add withCredentials for CORS
-  withCredentials: true
+  timeout: 30000, // Increased timeout for Vercel's cold starts
+  // Remove withCredentials as it's causing CORS issues
+  withCredentials: false
 });
 
-// Add request interceptor to include auth token and handle CORS
+// Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Add CORS headers for Vercel
-    config.headers['Access-Control-Allow-Origin'] = '*';
-    config.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,PATCH,OPTIONS';
+    // Add cache control headers
+    config.headers['Cache-Control'] = 'no-cache';
+    config.headers['Pragma'] = 'no-cache';
     return config;
   },
   (error) => {
@@ -43,15 +44,18 @@ api.interceptors.response.use(
     } else if (error.code === 'ECONNABORTED') {
       // Handle timeout errors (common with Vercel's cold starts)
       console.error('Request timeout - server might be cold starting');
-      return Promise.reject(new Error('Request timed out. Please try again in a few seconds.'));
+      return Promise.reject(new Error('The server is starting up. Please try again in a few seconds.'));
     } else if (!error.response) {
       // Handle network errors
       console.error('Network error:', error);
-      return Promise.reject(new Error('Network error. Please check your connection.'));
+      if (error.message.includes('CORS') || error.message.includes('cross-origin')) {
+        return Promise.reject(new Error('Unable to connect to the server. Please try again later.'));
+      }
+      return Promise.reject(new Error('Network error. Please check your connection and try again.'));
     } else if (error.response?.status === 503) {
       // Handle Vercel's cold start
       console.error('Service temporarily unavailable - cold start');
-      return Promise.reject(new Error('Service is starting up. Please try again in a few seconds.'));
+      return Promise.reject(new Error('The server is starting up. Please try again in a few seconds.'));
     }
     return Promise.reject(error);
   }
