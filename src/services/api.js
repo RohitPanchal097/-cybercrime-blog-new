@@ -1,7 +1,22 @@
 import axios from 'axios';
+import { initializeApp } from 'firebase/app';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Get the API URL from environment variables
 const API_URL = import.meta.env.VITE_API_URL;
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCnxoEAyOErwywVp0CYnRKGNY4FO7k2v5Y",
+  authDomain: "cybercel-62531.firebaseapp.com",
+  projectId: "cybercel-62531",
+  storageBucket: "cybercel-62531.appspot.com",
+  messagingSenderId: "851391911380",
+  appId: "1:851391911380:web:dd38a0ce110b96a4b37241",
+  measurementId: "G-DBPF6VY6D4"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const storage = getStorage(firebaseApp);
 
 // Create axios instance with base URL and default headers
 const api = axios.create({
@@ -75,35 +90,29 @@ export const authAPI = {
 export const postsAPI = {
   getAllPosts: () => api.get('/posts'),
   getPostById: (id) => api.get(`/posts/${id}`),
-  createPost: (postData) => {
-    const formData = new FormData();
-    Object.keys(postData).forEach(key => {
-      if (key === 'image' && postData[key]) {
-        formData.append('image', postData[key]);
-      } else {
-        formData.append(key, postData[key]);
-      }
-    });
-    return api.post('/posts', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+  createPost: async (postData) => {
+    let imageUrl = postData.image;
+    if (postData.image && postData.image instanceof File) {
+      // Upload image to Firebase Storage
+      const storageRef = ref(storage, `uploads/${Date.now()}-${postData.image.name}`);
+      await uploadBytes(storageRef, postData.image);
+      imageUrl = await getDownloadURL(storageRef);
+    }
+    // Send postData with imageUrl instead of file
+    const payload = { ...postData, image: imageUrl };
+    return api.post('/posts', payload);
   },
-  updatePost: (id, postData) => {
-    const formData = new FormData();
-    Object.keys(postData).forEach(key => {
-      if (key === 'image' && postData[key]) {
-        formData.append('image', postData[key]);
-      } else {
-        formData.append(key, postData[key]);
-      }
-    });
-    return api.put(`/posts/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+  updatePost: async (id, postData) => {
+    let imageUrl = postData.image;
+    if (postData.image && postData.image instanceof File) {
+      // Upload image to Firebase Storage
+      const storageRef = ref(storage, `uploads/${Date.now()}-${postData.image.name}`);
+      await uploadBytes(storageRef, postData.image);
+      imageUrl = await getDownloadURL(storageRef);
+    }
+    // Send postData with imageUrl instead of file
+    const payload = { ...postData, image: imageUrl };
+    return api.put(`/posts/${id}`, payload);
   },
   deletePost: (id) => api.delete(`/posts/${id}`)
 };
