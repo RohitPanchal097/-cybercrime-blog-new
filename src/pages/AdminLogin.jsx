@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserLock, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import firebaseApp from '../services/api';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -11,6 +13,7 @@ const AdminLogin = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
+  const auth = getAuth(firebaseApp);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,8 +27,15 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Placeholder: Set a dummy token for admin login
-      localStorage.setItem('adminToken', 'dummy-token');
+      const userCredential = await signInWithEmailAndPassword(auth, formData.username, formData.password);
+      const user = userCredential.user;
+      if (user.email === 'admin@gmail.com') {
+        localStorage.setItem('adminToken', 'dummy-token');
+        toast.success('Login successful!');
+        navigate('/admin/dashboard');
+      } else {
+        toast.error('Invalid credentials');
+      }
       toast.success('Login successful!');
       navigate('/admin/dashboard');
     } catch (error) {
@@ -34,6 +44,15 @@ const AdminLogin = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        navigate('/admin/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
   return (
     <div className="container">
