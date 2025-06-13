@@ -3,9 +3,9 @@
   /* Dark theme colors */
   --primary-color: #6366f1;
   --primary-hover: #818cf8;
-  --secondary-color: #94a3b8;
+  --secondary-color: #ffffff;
   --text-color: #e2e8f0;
-  --text-muted: #94a3b8;
+  --text-muted: #ffffff;
   --light-bg: #1e293b;
   --dark-bg: #0f172a;
   --card-bg: #1e293b;
@@ -26,24 +26,42 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: var(--text-color);
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  font-family: 'Poppins', sans-serif;
+  background-image: url('https://images.pexels.com/photos/7717487/pexels-photo-7717487.jpeg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  margin: 0;
+  /* padding-top: 56px; Adjust for fixed Navbar height */
+  color: #333;
   line-height: 1.6;
   min-height: 100vh;
 }
-
+  
 /* Layout */
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  position: relative; /* Needed for the pseudo-element positioning */
+  z-index: 0; /* Ensure content is above the overlay */
+}
+
+.app::before {
+  content: '';
+  position: absolute;
+  top: 56px; /* Start overlay below the navbar */
+  left: 0;
+  width: 100%;
+  height: calc(100% - 56px); /* Adjust height to fill remaining space */
+  background-color: rgba(0, 0, 0, 0.5); /* Dark semi-transparent black overlay */
+  z-index: -1; /* Place it behind the content but above the body background */
 }
 
 main {
   flex: 1;
   padding: 2rem 0;
+  background: transparent; /* Ensure main content area is transparent */
 }
 
 .container {
@@ -250,6 +268,13 @@ p {
   position: relative;
   overflow: hidden;
   box-shadow: var(--card-shadow);
+
+  /* Added Background Image/GIF */
+  background-image: url('https://images.unsplash.com/photo-1511370235-c743919e917d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Placeholder: Replace with your image/GIF URL */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: overlay; /* Blends with existing gradient */
 }
 
 .hero-section::before {
@@ -270,7 +295,7 @@ p {
 
 /* Card Styles */
 .card {
-  background: var(--card-bg);
+  background-color: rgba(30, 41, 59, 0.8); /* Make cards translucent */
   border: 1px solid var(--border-color);
   border-radius: 1rem;
   overflow: hidden;
@@ -678,20 +703,112 @@ p {
   box-shadow: 0 2px 8px 0 rgba(239,68,68,0.10);
 }
 
+/* Admin Dashboard Table Responsiveness Fix */
 .admin-dashboard .table-responsive {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: auto; /* Ensure horizontal scrolling */
+  -webkit-overflow-scrolling: touch; /* Improve scrolling on iOS */
 }
 
+.admin-dashboard .table-responsive table {
+  min-width: 768px; /* Ensure table always overflows on smaller screens, adjust as needed */
+}
+
+/* Make scrollbar more visible for debugging */
 .admin-dashboard .table-responsive::-webkit-scrollbar {
-  height: 10px;
+  height: 10px; /* Thicker scrollbar */
 }
 
 .admin-dashboard .table-responsive::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #888; /* Grey thumb */
   border-radius: 5px;
 }
 
 .admin-dashboard .table-responsive::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #555; /* Darker on hover */
 }
+
+/* Home Page Sections */
+.feature-section {
+  background: transparent; /* Set background to transparent */
+}
+
+.feature-section .card {
+  background-color: rgba(30, 41, 59, 0.8); /* Make feature cards translucent */
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  transition: all var(--transition-speed) ease;
+  box-shadow: var(--card-shadow);
+}
+
+.feature-section .card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--hover-shadow);
+}
+
+.feature-section .card h3 {
+  color: #ffffff;
+}
+
+.feature-section .card p {
+  color: #ffffff;
+}
+
+.cta-section {
+  background: transparent; /* Set background to transparent */
+  color: #fff;
+  padding: 4rem 0;
+  border-radius: 1rem;
+  margin-top: 4rem;
+}
+
+/* Basic Animations */
+.animate__animated {
+  animation-duration: 1s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate__fadeIn { animation-name: fadeIn; }
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.animate__fadeInDown { animation-name: fadeInDown; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.animate__fadeInUp { animation-name: fadeInUp; }
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale3d(0.3, 0.3, 0.3);
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.animate__zoomIn { animation-name: zoomIn; }
+
+/* Animation Delays */
+.animate__delay-1s { animation-delay: 1s; }
+.animate__delay-1-5s { animation-delay: 1.5s; }
+.animate__delay-2s { animation-delay: 2s; }
