@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserLock, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
@@ -7,6 +7,7 @@ import Parse from '../config/parse';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -46,20 +47,20 @@ const AdminLogin = () => {
   };
 
   useEffect(() => {
-    const checkAdminSession = async () => {
-      const currentUser = Parse.User.current();
-      if (currentUser && currentUser.getSessionToken()) {
-        navigate('/admin/dashboard');
-      } else if (!localStorage.getItem('adminToken')) {
-        // No navigation needed here, as the default state is login
-      }
-    };
-    
-    if (navigate.location?.pathname !== '/admin/dashboard') {
+    if (location.pathname === '/admin/login') {
+      const checkAdminSession = async () => {
+        const currentUser = Parse.User.current();
+        if (currentUser && currentUser.getSessionToken()) {
+          navigate('/admin/dashboard');
+        } else {
+          if (localStorage.getItem('adminToken')) {
+            localStorage.removeItem('adminToken');
+          }
+        }
+      };
       checkAdminSession();
     }
-
-  }, [navigate]);
+  }, [location.pathname, navigate]);
 
   return (
     <div className="container">
