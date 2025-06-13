@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faUser, faArrowLeft, faShare, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { postsAPI } from '../services/api';
+import { postsAPI } from '../services/back4app';
 
 const BlogPost = () => {
   const { id } = useParams();

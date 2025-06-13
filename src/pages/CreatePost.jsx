@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { postsAPI } from '../services/api';
+import { postsAPI } from '../services/back4app';
 
 const CreatePost = () => {
   const navigate = useNavigate();
