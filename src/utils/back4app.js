@@ -3,11 +3,19 @@ import Parse from '../config/parse';
 // Function to upload a file to Back4App
 export const uploadFile = async (file, folder = 'uploads') => {
   try {
-    // Sanitize the original filename to remove invalid characters
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    // Create a unique filename using timestamp and sanitized name
-    const fileName = `${Date.now()}_${sanitizedFileName}`;
+    // Extract original extension safely
+    const fileExtension = file.name.substring(file.name.lastIndexOf('.') + 1);
+    
+    // Create a filename using only a timestamp and the original extension
+    const fileName = `${Date.now()}.${fileExtension}`;
     const parseFile = new Parse.File(fileName, file);
+
+    console.log("Attempting to upload file with name:", fileName);
+    console.log("Original file object details:", {
+      originalName: file.name,
+      type: file.type,
+      size: file.size
+    });
     
     // Save the file
     await parseFile.save();
