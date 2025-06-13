@@ -98,7 +98,7 @@ const AdminDashboard = () => {
       <div className="card shadow-sm">
         <div className="card-body">
           <div className="table-responsive">
-            <table className="table">
+            <table className="table table-sm">
               <thead>
                 <tr>
                   <th>Title</th>

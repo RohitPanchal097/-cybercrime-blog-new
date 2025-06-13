@@ -678,11 +678,20 @@ p {
   box-shadow: 0 2px 8px 0 rgba(239,68,68,0.10);
 }
 
+.admin-dashboard .table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .admin-dashboard .table-responsive::-webkit-scrollbar {
-  height: 8px;
+  height: 10px;
 }
 
 .admin-dashboard .table-responsive::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 4px;
+  background: #888;
+  border-radius: 5px;
+}
+
+.admin-dashboard .table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
