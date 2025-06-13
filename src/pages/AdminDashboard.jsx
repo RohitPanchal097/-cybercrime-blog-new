@@ -4,23 +4,30 @@ import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { postsAPI } from '../services/back4app';
+import Parse from '../config/parse'; // Import Parse SDK
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false); // New state for auth check
 
   useEffect(() => {
-    // Check if admin is logged in
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      navigate('/admin/login');
-      return;
-    }
+    const checkAuthAndFetchPosts = async () => {
+      const currentUser = Parse.User.current();
+      if (!currentUser || !currentUser.getSessionToken()) {
+        // Not authenticated, redirect to login
+        navigate('/admin/login');
+        return;
+      }
+      // Authenticated, proceed to fetch posts
+      fetchPosts();
+      setAuthChecked(true);
+    };
 
-    fetchPosts();
-  }, [navigate]);
+    checkAuthAndFetchPosts();
+  }, [navigate]); // Depend on navigate
 
   const fetchPosts = async () => {
     try {
@@ -51,7 +58,8 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading) {
+  // Render loading state until authentication check is complete
+  if (!authChecked || loading) {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status">
@@ -102,7 +110,7 @@ const AdminDashboard = () => {
               <tbody>
                 {posts && posts.length > 0 ? (
                   posts.map((post) => (
-                    <tr key={post?._id || Math.random()}>
+                    <tr key={post?.id || Math.random()}>
                       <td>{post?.title || 'Untitled'}</td>
                       <td>
                         <span className="badge bg-primary">
@@ -118,17 +126,17 @@ const AdminDashboard = () => {
                       <td>
                         <div className="btn-group">
                           <Link
-                            to={`/admin/edit/${post?._id}`}
+                            to={`/admin/edit/${post?.id}`}
                             className="btn btn-sm btn-outline-primary"
                             title="Edit"
                           >
                             <FontAwesomeIcon icon={faEdit} />
                           </Link>
                           <button
-                            onClick={() => handleDelete(post?._id)}
+                            onClick={() => handleDelete(post?.id)}
                             className="btn btn-sm btn-outline-danger ms-2"
                             title="Delete"
-                            disabled={!post?._id}
+                            disabled={!post?.id}
                           >
                             <FontAwesomeIcon icon={faTrash} />
                           </button>
