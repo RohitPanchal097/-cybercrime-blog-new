@@ -25,10 +25,15 @@ const AdminLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    console.log("Attempting login for user:", formData.username);
     try {
       const user = await Parse.User.logIn(formData.username, formData.password);
       
+      console.log("Login successful. User object:", user);
+      console.log("Session Token from Parse:", user.getSessionToken());
+
       localStorage.setItem('adminToken', user.getSessionToken());
+      console.log("adminToken set in localStorage.", localStorage.getItem('adminToken'));
 
       toast.success('Login successful!');
       navigate('/admin/dashboard');
@@ -41,19 +46,25 @@ const AdminLogin = () => {
         errorMessage = `Login failed: ${error.message}`;
       }
       toast.error(errorMessage);
+      console.error("Login attempt failed. Error details:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log("AdminLogin useEffect triggered. Current path:", location.pathname);
     if (location.pathname === '/admin/login') {
       const checkAdminSession = async () => {
         const currentUser = Parse.User.current();
+        console.log("AdminLogin useEffect - currentUser:", currentUser);
         if (currentUser && currentUser.getSessionToken()) {
+          console.log("AdminLogin useEffect - User already logged in, redirecting to dashboard.", currentUser.getSessionToken());
           navigate('/admin/dashboard');
         } else {
+          console.log("AdminLogin useEffect - No Parse current user.");
           if (localStorage.getItem('adminToken')) {
+            console.log("AdminLogin useEffect - Found stale adminToken in localStorage, clearing it.");
             localStorage.removeItem('adminToken');
           }
         }
