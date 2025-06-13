@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserLock, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import firebaseApp from '../services/api';
-
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin@123";
+import Parse from '../config/parse';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -16,7 +12,6 @@ const AdminLogin = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const auth = getAuth(firebaseApp);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,26 +25,40 @@ const AdminLogin = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (
-        formData.username === ADMIN_USERNAME &&
-        formData.password === ADMIN_PASSWORD
-      ) {
-        localStorage.setItem('adminToken', 'static-admin-token');
-        toast.success('Login successful!');
-        navigate('/admin/dashboard');
+      const user = await Parse.User.logIn(formData.username, formData.password);
+      
+      localStorage.setItem('adminToken', user.getSessionToken());
+
+      toast.success('Login successful!');
+      navigate('/admin/dashboard');
+    } catch (error) {
+      let errorMessage = 'Invalid username or password';
+      if (error.code === 101) {
+        errorMessage = 'Invalid username or password';
       } else {
-        toast.error('Invalid username or password');
+        console.error('Login error:', error);
+        errorMessage = `Login failed: ${error.message}`;
       }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      navigate('/admin/login');
+    const checkAdminSession = async () => {
+      const currentUser = Parse.User.current();
+      if (currentUser && currentUser.getSessionToken()) {
+        navigate('/admin/dashboard');
+      } else if (!localStorage.getItem('adminToken')) {
+        // No navigation needed here, as the default state is login
+      }
+    };
+    
+    if (navigate.location?.pathname !== '/admin/dashboard') {
+      checkAdminSession();
     }
+
   }, [navigate]);
 
   return (

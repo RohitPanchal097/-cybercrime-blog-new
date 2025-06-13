@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faUser, faArrowRight, faFolder } from '@fortawesome/free-solid-svg-icons';
-import { postsAPI } from '../services/api';
+import { postsAPI } from '../services/back4app';
 
 const Categories = () => {
   const [categories, setCategories] = useState({});
